@@ -30,7 +30,7 @@ class ProfileController extends Controller
             'grade_year' => ['required', 'string', 'max:50'],
             'curriculum' => ['required', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
-            'dob' => [...$dobRules, 'date', 'before:today', new MinimumAge(13)],
+            'dob' => ['bail', ...$dobRules, 'date', 'before:today', new MinimumAge(13)],
         ]);
 
         if ($validator->fails()) {

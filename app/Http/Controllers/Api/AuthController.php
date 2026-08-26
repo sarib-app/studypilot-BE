@@ -26,7 +26,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', PasswordRule::min(8)->numbers()],
-            'dob' => ['required', 'date', 'before:today', new MinimumAge(13)],
+            'dob' => ['bail', 'required', 'date', 'before:today', new MinimumAge(13)],
         ]);
 
         $user = User::create([

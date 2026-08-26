@@ -17,7 +17,13 @@ class MinimumAge implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $dob = Carbon::parse($value);
+        try {
+            $dob = Carbon::parse($value);
+        } catch (\Exception) {
+            // Malformed dates (e.g. day 90) are already caught by the 'date' rule elsewhere in
+            // the field's rule list — nothing more to check here since there's no valid date.
+            return;
+        }
 
         if ($dob->age < $this->years) {
             // Abuse-monitoring signal only — no email/name, just that a blocked attempt occurred.
