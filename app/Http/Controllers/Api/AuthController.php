@@ -141,8 +141,6 @@ class AuthController extends Controller
         $user = User::where('google_id', $payload['sub'])->first()
             ?? User::where('email', $payload['email'])->first();
 
-        $isNew = ! $user;
-
         if (! $user) {
             $user = User::create([
                 'name' => $payload['given_name'] ?? Str::before($payload['email'], '@'),
@@ -163,7 +161,10 @@ class AuthController extends Controller
 
         $token = $user->createToken('studypilot-mobile')->plainTextToken;
 
-        return response()->json(['user' => $user, 'token' => $token, 'is_new' => $isNew]);
+        // Based on profile completeness, not account age — a first attempt at Profile Setup
+        // can fail (bad input, dropped connection) and leave the account without a grade_year,
+        // in which case the next sign-in should still land back in onboarding, not Home.
+        return response()->json(['user' => $user, 'token' => $token, 'needs_onboarding' => ! $user->grade_year]);
     }
 
     /**
@@ -206,8 +207,6 @@ class AuthController extends Controller
         $user = User::where('apple_id', $payload->sub)->first()
             ?? User::where('email', $payload->email ?? null)->first();
 
-        $isNew = ! $user;
-
         if (! $user) {
             $user = User::create([
                 'name' => $validated['full_name'] ?? Str::before($payload->email, '@'),
@@ -227,6 +226,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('studypilot-mobile')->plainTextToken;
 
-        return response()->json(['user' => $user, 'token' => $token, 'is_new' => $isNew]);
+        // See googleSignIn — based on profile completeness, not account age.
+        return response()->json(['user' => $user, 'token' => $token, 'needs_onboarding' => ! $user->grade_year]);
     }
 }
