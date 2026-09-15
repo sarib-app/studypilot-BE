@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\SessionController;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Route;
 
@@ -22,4 +24,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/onboarding/subjects', [ProfileController::class, 'updateSubjects']);
     Route::put('/onboarding/goal', [ProfileController::class, 'updateGoal']);
+
+    Route::get('/home', [HomeController::class, 'index']);
+
+    Route::get('/sessions', [SessionController::class, 'index']);
+    Route::post('/sessions', [SessionController::class, 'store']);
+    Route::get('/sessions/{session}', [SessionController::class, 'show']);
+    Route::put('/sessions/{session}', [SessionController::class, 'update']);
+    Route::delete('/sessions/{session}', [SessionController::class, 'destroy']);
+    Route::post('/sessions/{session}/start', [SessionController::class, 'start']);
+    Route::post('/sessions/{session}/complete', [SessionController::class, 'complete']);
 });
