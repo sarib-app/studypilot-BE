@@ -24,6 +24,8 @@ use Laravel\Sanctum\HasApiTokens;
     'weekly_study_goal_hours',
     'google_id',
     'apple_id',
+    'reminder_lead_minutes',
+    'nudge_if_not_begun',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -52,6 +54,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'dob' => 'date',
             'password' => 'hashed',
+            'nudge_if_not_begun' => 'boolean',
         ];
     }
 }

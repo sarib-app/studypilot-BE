@@ -87,7 +87,9 @@ class SessionController extends Controller
     {
         $this->authorizeOwner($request, $session);
 
-        if ($session->status !== 'in_progress') {
+        // "missed" is allowed too — that's how the Plan screen's "Mark complete" retroactively
+        // logs a session that was never live-started (actual_minutes then just mirrors the plan).
+        if (! in_array($session->status, ['in_progress', 'missed'], true)) {
             throw ValidationException::withMessages([
                 'status' => ["Can't complete a session that is {$session->status}."],
             ]);
@@ -108,6 +110,34 @@ class SessionController extends Controller
         ]);
 
         return response()->json($session->load('subject'));
+    }
+
+    /** Duplicates every session from last week onto the corresponding day this week, as fresh planned sessions. */
+    public function copyLastWeek(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        [$lastStart, $lastEnd] = StudySession::weekRange(now()->subWeek());
+
+        $lastWeekSessions = StudySession::where('user_id', $user->id)
+            ->whereBetween('scheduled_at', [$lastStart, $lastEnd])
+            ->get();
+
+        $copies = $lastWeekSessions->map(fn (StudySession $session) => [
+            'user_id' => $user->id,
+            'subject_id' => $session->subject_id,
+            'topic' => $session->topic,
+            'scheduled_at' => $session->scheduled_at->copy()->addWeek(),
+            'duration_minutes' => $session->duration_minutes,
+            'status' => 'planned',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if ($copies->isNotEmpty()) {
+            StudySession::insert($copies->all());
+        }
+
+        return response()->json(['copied' => $copies->count()]);
     }
 
     private function validateSession(Request $request): array

@@ -89,4 +89,17 @@ class ProfileController extends Controller
 
         return response()->json($user);
     }
+
+    public function updateReminderSettings(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'reminder_lead_minutes' => ['required', 'integer', 'in:0,10,15,30,60'],
+            'nudge_if_not_begun' => ['required', 'boolean'],
+        ]);
+
+        $user = $request->user();
+        $user->update($validated);
+
+        return response()->json($user);
+    }
 }
