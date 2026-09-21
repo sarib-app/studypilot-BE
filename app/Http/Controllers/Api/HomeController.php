@@ -21,10 +21,23 @@ class HomeController extends Controller
             ->with('subject')
             ->first();
 
+        // Nearest missed session — surfaced on Home so Pilot can suggest rescheduling it instead
+        // of it just sitting passively in the Plan list.
+        $missedSession = StudySession::where('user_id', $user->id)
+            ->where('status', 'missed')
+            ->orderByDesc('scheduled_at')
+            ->with('subject')
+            ->first();
+
         [$weekStart, $weekEnd] = StudySession::weekRange();
         $weeklyMinutes = StudySession::where('user_id', $user->id)
             ->where('status', 'completed')
             ->whereBetween('completed_at', [$weekStart, $weekEnd])
+            ->sum('actual_minutes');
+
+        $todayMinutes = StudySession::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->whereDate('completed_at', now())
             ->sum('actual_minutes');
 
         $weeklyGoalHours = $user->weekly_study_goal_hours ?? 0;
@@ -32,6 +45,8 @@ class HomeController extends Controller
 
         return response()->json([
             'next_session' => $nextSession,
+            'missed_session' => $missedSession,
+            'today_minutes_studied' => (int) $todayMinutes,
             'streak_days' => StudySession::currentStreakFor($user),
             'weekly_goal_hours' => $weeklyGoalHours,
             'weekly_hours_studied' => $weeklyHoursStudied,

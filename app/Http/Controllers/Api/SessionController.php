@@ -109,6 +109,26 @@ class SessionController extends Controller
             'local_date' => $validated['local_date'] ?? now()->toDateString(),
         ]);
 
+        // 1 XP per minute studied — simple and transparent; not part of the original MVP spec,
+        // added per Stefan's Phase 3 review feedback. Level = floor(xp / 1000) + 1.
+        $request->user()->increment('xp', $validated['actual_minutes']);
+
+        return response()->json($session->load('subject'));
+    }
+
+    /** Attaches a reflection after the fact — used by the completion screen, which completes the
+     * session immediately on load (so streak/goal feedback there is real, not projected) and only
+     * attaches the optional feeling chip once the user picks one and taps Done. */
+    public function reflect(Request $request, StudySession $session): JsonResponse
+    {
+        $this->authorizeOwner($request, $session);
+
+        $validated = $request->validate([
+            'reflection' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $session->update(['reflection' => $validated['reflection'] ?? null]);
+
         return response()->json($session->load('subject'));
     }
 

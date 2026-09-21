@@ -36,4 +36,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/sessions/{session}', [SessionController::class, 'destroy']);
     Route::post('/sessions/{session}/start', [SessionController::class, 'start']);
     Route::post('/sessions/{session}/complete', [SessionController::class, 'complete']);
+    Route::post('/sessions/{session}/reflect', [SessionController::class, 'reflect']);
 });
