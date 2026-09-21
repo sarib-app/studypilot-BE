@@ -68,6 +68,20 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out.']);
     }
 
+    /**
+     * Required by Apple's App Store review guidelines (5.1.1(v)) for any app that supports
+     * account creation. study_sessions and custom subjects cascade at the DB level; tokens are
+     * polymorphic (no FK) so they're cleared explicitly first.
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json(['message' => 'Account deleted.']);
+    }
+
     public function forgotPassword(Request $request): JsonResponse
     {
         $request->validate(['email' => ['required', 'email']]);

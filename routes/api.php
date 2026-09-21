@@ -19,6 +19,7 @@ Route::post('/auth/apple', [AuthController::class, 'appleSignIn']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::delete('/account', [AuthController::class, 'deleteAccount']);
 
     Route::get('/me', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
