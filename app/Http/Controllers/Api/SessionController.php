@@ -55,6 +55,12 @@ class SessionController extends Controller
         $validated = $this->validateSession($request);
         $this->authorizeSubject($request->user()->id, $validated['subject_id']);
 
+        // Editing a missed session (rescheduling it) means trying again — it shouldn't stay
+        // stuck as "missed" just because its scheduled_at moved into the future.
+        if ($session->status === 'missed') {
+            $validated['status'] = 'planned';
+        }
+
         $session->update($validated);
 
         return response()->json($session->load('subject'));
@@ -96,7 +102,9 @@ class SessionController extends Controller
         }
 
         $validated = $request->validate([
-            'actual_minutes' => ['required', 'integer', 'min:1', 'max:600'],
+            // 0 is allowed — that's what a retroactive "Mark complete" on a missed session sends,
+            // since it never actually ran the timer and shouldn't be credited real study time.
+            'actual_minutes' => ['required', 'integer', 'min:0', 'max:600'],
             'reflection' => ['nullable', 'string', 'max:2000'],
             'local_date' => ['nullable', 'date_format:Y-m-d'],
         ]);

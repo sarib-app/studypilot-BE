@@ -40,6 +40,13 @@ class HomeController extends Controller
             ->whereDate('completed_at', now())
             ->sum('actual_minutes');
 
+        // Total planned today (any status) — feeds Pilot's Home briefing ("you've got 50 min
+        // planned today"), distinct from today_minutes_studied which is only what's actually done.
+        $todayPlannedMinutes = StudySession::where('user_id', $user->id)
+            ->whereDate('scheduled_at', now())
+            ->whereIn('status', ['planned', 'missed', 'in_progress', 'completed'])
+            ->sum('duration_minutes');
+
         $weeklyGoalHours = $user->weekly_study_goal_hours ?? 0;
         $weeklyHoursStudied = round($weeklyMinutes / 60, 1);
 
@@ -47,6 +54,7 @@ class HomeController extends Controller
             'next_session' => $nextSession,
             'missed_session' => $missedSession,
             'today_minutes_studied' => (int) $todayMinutes,
+            'today_planned_minutes' => (int) $todayPlannedMinutes,
             'streak_days' => StudySession::currentStreakFor($user),
             'weekly_goal_hours' => $weeklyGoalHours,
             'weekly_hours_studied' => $weeklyHoursStudied,
