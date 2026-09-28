@@ -46,7 +46,7 @@ class ProfileController extends Controller
 
         $user->update($validator->validated());
 
-        return response()->json($user);
+        return response()->json($user->load('subjects'));
     }
 
     public function updateSubjects(Request $request): JsonResponse
@@ -87,7 +87,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $user->update($validated);
 
-        return response()->json($user);
+        return response()->json($user->load('subjects'));
     }
 
     public function updateReminderSettings(Request $request): JsonResponse
@@ -100,6 +100,6 @@ class ProfileController extends Controller
         $user = $request->user();
         $user->update($validated);
 
-        return response()->json($user);
+        return response()->json($user->load('subjects'));
     }
 }

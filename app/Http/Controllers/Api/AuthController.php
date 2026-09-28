@@ -58,7 +58,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('studypilot-mobile')->plainTextToken;
 
-        return response()->json(['user' => $user, 'token' => $token]);
+        return response()->json(['user' => $user->load('subjects'), 'token' => $token]);
     }
 
     public function logout(Request $request): JsonResponse
@@ -178,7 +178,7 @@ class AuthController extends Controller
         // Based on profile completeness, not account age — a first attempt at Profile Setup
         // can fail (bad input, dropped connection) and leave the account without a grade_year,
         // in which case the next sign-in should still land back in onboarding, not Home.
-        return response()->json(['user' => $user, 'token' => $token, 'needs_onboarding' => ! $user->grade_year]);
+        return response()->json(['user' => $user->load('subjects'), 'token' => $token, 'needs_onboarding' => ! $user->grade_year]);
     }
 
     /**
@@ -241,6 +241,6 @@ class AuthController extends Controller
         $token = $user->createToken('studypilot-mobile')->plainTextToken;
 
         // See googleSignIn — based on profile completeness, not account age.
-        return response()->json(['user' => $user, 'token' => $token, 'needs_onboarding' => ! $user->grade_year]);
+        return response()->json(['user' => $user->load('subjects'), 'token' => $token, 'needs_onboarding' => ! $user->grade_year]);
     }
 }

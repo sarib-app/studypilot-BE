@@ -173,7 +173,7 @@ class SessionController extends Controller
         return $request->validate([
             'subject_id' => ['required', 'integer'],
             'topic' => ['nullable', 'string', 'max:255'],
-            'scheduled_at' => ['required', 'date'],
+            'scheduled_at' => ['required', 'date', 'after:now'],
             'duration_minutes' => ['required', 'integer', 'min:5', 'max:240'],
         ]);
     }
