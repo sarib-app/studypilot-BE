@@ -115,23 +115,24 @@ class StudySession extends Model
         ];
     }
 
-    /** Per-day totals for the last $days days (today inclusive), bucketed by local_date exactly
-     * like the streak calculation — so the daily breakdown and the streak count can never disagree
-     * about which days qualified. */
-    public static function dailyMinutesFor(User $user, int $days): array
+    /** Per-day totals for the $days days ending on $end (inclusive, defaults to today),
+     * bucketed by local_date exactly like the streak calculation — so the daily breakdown and
+     * the streak count can never disagree about which days qualified. */
+    public static function dailyMinutesFor(User $user, int $days, ?Carbon $end = null): array
     {
-        $start = Carbon::today()->subDays($days - 1);
+        $end ??= Carbon::today();
+        $start = $end->copy()->subDays($days - 1);
 
         $byDate = static::where('user_id', $user->id)
             ->where('status', 'completed')
             ->whereNotNull('local_date')
-            ->where('local_date', '>=', $start->toDateString())
+            ->whereBetween('local_date', [$start->toDateString(), $end->toDateString()])
             ->selectRaw('local_date, SUM(actual_minutes) as minutes')
             ->groupBy('local_date')
             ->pluck('minutes', 'local_date');
 
         $result = [];
-        for ($cursor = $start->copy(); $cursor->lte(Carbon::today()); $cursor->addDay()) {
+        for ($cursor = $start->copy(); $cursor->lte($end); $cursor->addDay()) {
             $minutes = (int) ($byDate[$cursor->toDateString()] ?? 0);
             $result[] = [
                 'date' => $cursor->toDateString(),
