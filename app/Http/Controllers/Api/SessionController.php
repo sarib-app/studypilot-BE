@@ -173,7 +173,11 @@ class SessionController extends Controller
         return $request->validate([
             'subject_id' => ['required', 'integer'],
             'topic' => ['nullable', 'string', 'max:255'],
-            'scheduled_at' => ['required', 'date', 'after:now'],
+            // A grace window, not a strict "after now" — Quick 25 schedules for the exact
+            // instant it's tapped so it can start right away, and by the time that request
+            // reaches the server, real "now" has already ticked past the timestamp the app
+            // sent. Still blocks genuinely past-dated scheduling (yesterday, hours ago, etc).
+            'scheduled_at' => ['required', 'date', 'after:' . now()->subMinutes(5)->toIso8601String()],
             'duration_minutes' => ['required', 'integer', 'min:5', 'max:240'],
         ]);
     }
