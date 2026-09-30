@@ -29,12 +29,6 @@ class HomeController extends Controller
             ->with('subject')
             ->first();
 
-        [$weekStart, $weekEnd] = StudySession::weekRange();
-        $weeklyMinutes = StudySession::where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->whereBetween('completed_at', [$weekStart, $weekEnd])
-            ->sum('actual_minutes');
-
         $todayMinutes = StudySession::where('user_id', $user->id)
             ->where('status', 'completed')
             ->whereDate('completed_at', now())
@@ -47,20 +41,13 @@ class HomeController extends Controller
             ->whereIn('status', ['planned', 'missed', 'in_progress', 'completed'])
             ->sum('duration_minutes');
 
-        $weeklyGoalHours = $user->weekly_study_goal_hours ?? 0;
-        $weeklyHoursStudied = round($weeklyMinutes / 60, 1);
-
         return response()->json([
             'next_session' => $nextSession,
             'missed_session' => $missedSession,
             'today_minutes_studied' => (int) $todayMinutes,
             'today_planned_minutes' => (int) $todayPlannedMinutes,
             'streak_days' => StudySession::currentStreakFor($user),
-            'weekly_goal_hours' => $weeklyGoalHours,
-            'weekly_hours_studied' => $weeklyHoursStudied,
-            'weekly_goal_progress' => $weeklyGoalHours > 0
-                ? min(1, round($weeklyHoursStudied / $weeklyGoalHours, 2))
-                : 0,
+            ...StudySession::weeklyStatsFor($user),
         ]);
     }
 }

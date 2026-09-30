@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ProgressController;
 use App\Http\Controllers\Api\SessionController;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/settings/reminders', [ProfileController::class, 'updateReminderSettings']);
 
     Route::get('/home', [HomeController::class, 'index']);
+    Route::get('/progress', [ProgressController::class, 'index']);
 
     Route::get('/sessions', [SessionController::class, 'index']);
     Route::post('/sessions', [SessionController::class, 'store']);

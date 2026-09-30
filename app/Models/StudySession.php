@@ -92,4 +92,54 @@ class StudySession extends Model
             $date->copy()->endOfWeek(Carbon::SUNDAY),
         ];
     }
+
+    /** Shared by HomeController and ProgressController so the two screens can never show
+     * different numbers for the same week. */
+    public static function weeklyStatsFor(User $user): array
+    {
+        [$weekStart, $weekEnd] = static::weekRange();
+        $weeklyMinutes = static::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->whereBetween('completed_at', [$weekStart, $weekEnd])
+            ->sum('actual_minutes');
+
+        $weeklyGoalHours = $user->weekly_study_goal_hours ?? 0;
+        $weeklyHoursStudied = round($weeklyMinutes / 60, 1);
+
+        return [
+            'weekly_goal_hours' => $weeklyGoalHours,
+            'weekly_hours_studied' => $weeklyHoursStudied,
+            'weekly_goal_progress' => $weeklyGoalHours > 0
+                ? min(1, round($weeklyHoursStudied / $weeklyGoalHours, 2))
+                : 0,
+        ];
+    }
+
+    /** Per-day totals for the last $days days (today inclusive), bucketed by local_date exactly
+     * like the streak calculation — so the daily breakdown and the streak count can never disagree
+     * about which days qualified. */
+    public static function dailyMinutesFor(User $user, int $days): array
+    {
+        $start = Carbon::today()->subDays($days - 1);
+
+        $byDate = static::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->whereNotNull('local_date')
+            ->where('local_date', '>=', $start->toDateString())
+            ->selectRaw('local_date, SUM(actual_minutes) as minutes')
+            ->groupBy('local_date')
+            ->pluck('minutes', 'local_date');
+
+        $result = [];
+        for ($cursor = $start->copy(); $cursor->lte(Carbon::today()); $cursor->addDay()) {
+            $minutes = (int) ($byDate[$cursor->toDateString()] ?? 0);
+            $result[] = [
+                'date' => $cursor->toDateString(),
+                'minutes' => $minutes,
+                'goal_met' => $minutes >= 15,
+            ];
+        }
+
+        return $result;
+    }
 }
